@@ -1,0 +1,65 @@
+spring:
+  application:
+    # This is the microservice name — must match the config file in your Git config repo
+    name: guest-service
+
+  config:
+    # This tells Spring to load configuration from your centralized config server
+    # "optional:" means it will still start even if the config server is not reachable
+    import: optional:configserver:http://localhost:8888
+
+  datasource:
+    # Local fallback configuration (used when config server is not running)
+
+    url: jdbc:postgresql://localhost:5432/Guest
+    username: phoneshop_night
+    password: "vichea123"
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: true
+    open-in-view: false
+
+  # Optional but useful for microservices — to avoid long startup waits when Config Server is down
+  cloud:
+    config:
+      fail-fast: false  # don't crash if config server is unavailable
+      retry:
+        max-attempts: 3
+        initial-interval: 2000
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password:
+      database: 0
+
+
+server:
+  port: 8081
+
+eureka:
+  client:
+    service-url:
+       defaultZone: http://localhost:8761/eureka/
+       instance:
+            prefer-ip-address: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    org.springframework: INFO
+    com.group.learn: DEBUG
