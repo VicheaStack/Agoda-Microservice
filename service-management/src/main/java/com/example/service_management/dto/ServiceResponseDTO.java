@@ -1,6 +1,8 @@
 package com.example.service_management.dto;
 
 import lombok.*;
+
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Getter
@@ -13,7 +15,7 @@ public class ServiceResponseDTO {
     private Long id;
     private String name;
     private String description;
-    private Double price;
+    private BigDecimal price;
     private String category;
     private String status;
     private LocalDateTime createdAt;
