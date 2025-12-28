@@ -1,6 +1,6 @@
 spring:
   application:
-    name: Booking Management
+    name: BOOKING-SERVICE
 
   config:
     import: optional:configserver:http://localhost:8888
@@ -29,6 +29,15 @@ spring:
 # THESE ARE TOP-LEVEL, NOT UNDER SPRING:
 server:
   port: 8083
+
+# ONTHER SERVICE (STORE BY NAME, NOT PORT)
+services:
+  guest:
+    name: GUEST-SERVICE
+  loyalty:
+    name: LOYALTY-SERVICE
+  room:
+    name: ROOM-SERVICE
 
 eureka:
   client:

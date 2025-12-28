@@ -63,6 +63,13 @@
 			<scope>provided</scope>
 		</dependency>
 
+		<!-- Spring WebFlux (includes WebClient) -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-webflux</artifactId>
+		</dependency>
+
+
 		<!-- Spring Cloud -->
 		<dependency>
 			<groupId>org.springframework.cloud</groupId>

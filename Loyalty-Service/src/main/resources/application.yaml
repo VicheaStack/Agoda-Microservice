@@ -1,6 +1,6 @@
 spring:
   application:
-    name: Loyalty-Service
+    name: LOYALTY-SERVICE
 
   config:
     import: "optional:configserver:http://localhost:8888"

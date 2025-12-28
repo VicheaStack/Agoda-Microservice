@@ -1,7 +1,7 @@
 spring:
   application:
     # This is the microservice name — must match the config file in your Git config repo
-    name: guest-service
+    name: GUEST-SERVICE
 
   config:
     # This tells Spring to load configuration from your centralized config server

@@ -33,7 +33,11 @@ public class BookingServiceImpl implements BookingService {
         existing.setGuestEmail(booking.getGuestEmail());
         existing.setCheckInDate(booking.getCheckInDate());
         existing.setCheckOutDate(booking.getCheckOutDate());
-        existing.setNumGuests(booking.getNumGuests());
+        existing.setActualCheckIn(booking.getActualCheckIn());
+        existing.setActualCheckOut(booking.getActualCheckOut());
+        existing.setRoomType(booking.getRoomType());
+        existing.setRoomNumber(booking.getRoomNumber());
+        existing.setNumberOfGuests(booking.getNumberOfGuests());
         existing.setSpecialRequests(booking.getSpecialRequests());
         existing.setStatus(booking.getStatus());
         existing.setCancellationReason(booking.getCancellationReason());
