@@ -1,0 +1,14 @@
+server:
+  port: 8761  # Eureka Dashboard port
+
+spring:
+  application:
+    name: discovery-server
+
+eureka:
+  client:
+    register-with-eureka: false  # Server doesn't register itself
+    fetch-registry: false        # Server doesn't fetch registry
+
+  server:
+    enable-self-preservation: false  # Optional: easier for local testing
