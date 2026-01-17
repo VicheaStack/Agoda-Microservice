@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import java.net.URI;
 
 @RestController
-@RequestMapping("/api/room-images")
+@RequestMapping("/images")
 public class RoomImageController {
 
     private final RoomImageService roomImageService;

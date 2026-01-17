@@ -2,81 +2,91 @@ server:
   port: 8080
 
 spring:
-  application:
-    name: api-gateway
   cloud:
     gateway:
-      discovery:
-        locator:
-          enabled: true
-          lower-case-service-id: true
+      default-filters:
+        - AddRequestHeader=X-Correlation-ID, #{T(java.util.UUID).randomUUID()}
+        - AddResponseHeader=X-Gateway-log, Active
+
       routes:
+
         - id: guest-service
           uri: lb://GUEST-SERVICE
           predicates:
-            - Path=/api/guests/**
+            - Path=/api/v1/guest/**
           filters:
-            - StripPrefix=1
-            - name: CircuitBreaker
+            - StripPrefix=3
+            - name: RequestRateLimiter
               args:
-                name: guestService
-                fallbackUri: forward:/fallback/guest
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+                key-resolver: "#{@ipKeyResolver}"
+
+        - id: loyalty-service
+          uri: lb://LOYALTY-SERVICE
+          predicates:
+            - Path=/api/v1/loyalty/**
+          filters:
+            - StripPrefix=3
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+                key-resolver: "#{@ipKeyResolver}"
 
         - id: booking-service
           uri: lb://BOOKING-SERVICE
           predicates:
-            - Path=/api/bookings/**
+            - Path=/api/v1/booking/**
           filters:
-            - StripPrefix=1
-            - name: CircuitBreaker
+            - StripPrefix=3
+            - name: RequestRateLimiter
               args:
-                name: bookingService
-                fallbackUri: forward:/fallback/booking
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+                key-resolver: "#{@ipKeyResolver}"
 
-        - id: auth-service
-          uri: lb://AUTH-SERVICE
+        - id: room-service
+          uri: lb://ROOM-SERVICE
           predicates:
-            - Path=/api/auth/**
+            - Path=/api/v1/rooms/**
           filters:
-            - StripPrefix=1
+            - StripPrefix=3
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+                key-resolver: "#{@ipKeyResolver}"
 
-      # GLOBAL DEFAULT FILTERS (applied to ALL routes)
-      default-filters:
-        - AddRequestHeader=X-Gateway-Request, true
-        - AddResponseHeader=X-Gateway-Response, true
-        - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
+        - id: staff-service
+          uri: lb://STAFF-SERVICE
+          predicates:
+            - Path=/api/v1/staffs/**
+          filters:
+            - StripPrefix=3
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+                key-resolver: "#{@ipKeyResolver}"
+
+        - id: service-management
+          uri: lb://SERVICE-MANAGEMENT
+          predicates:
+            - Path=/api/v1/service/**
+          filters:
+            - StripPrefix=3
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+                key-resolver: "#{@ipKeyResolver}"
+  data:
+    redis:
+      host: localhost
+      port: 6379
 
 eureka:
   client:
     service-url:
       defaultZone: http://localhost:8761/eureka/
-  instance:
-    prefer-ip-address: true
-
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info,gateway,routes
-  endpoint:
-    gateway:
-      enabled: true
-
-resilience4j:
-  circuitbreaker:
-    instances:
-      guestService:
-        register-health-indicator: true
-        sliding-window-size: 10
-        failure-rate-threshold: 50
-        wait-duration-in-open-state: 5s
-      bookingService:
-        sliding-window-size: 10
-        failure-rate-threshold: 50
-        wait-duration-in-open-state: 5s
-
-logging:
-  level:
-    org.springframework.cloud.gateway: DEBUG
-    com.example.gateway: DEBUG
-    com.netflix.discovery: INFO

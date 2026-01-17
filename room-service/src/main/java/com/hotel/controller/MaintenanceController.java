@@ -9,7 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("api/v1/maintenance")
+@RequestMapping("/maintenance")
 public class MaintenanceController {
 
     private final MaintenanceService maintenanceService;

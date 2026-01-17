@@ -1,7 +1,6 @@
 package com.group.learn.controller;
 
 import com.group.learn.dto.LoyaltyDTO;
-import com.group.learn.entity.LoyaltyTransaction;
 import com.group.learn.exception.ResourceNotFoundException;
 import com.group.learn.service.UserService;
 import jakarta.validation.Valid;
@@ -15,7 +14,7 @@ import reactor.core.publisher.Mono;
 @Validated
 @Slf4j
 @RestController
-@RequestMapping("/api/v1/users")
+@RequestMapping("/users")
 public class UserController {
 
     private final UserService userService;
@@ -27,15 +26,15 @@ public class UserController {
     // -------------------- CREATE --------------------
     @PostMapping("/loyalty")
     @ResponseStatus(HttpStatus.CREATED)
-    public Mono<LoyaltyTransaction> createLoyalty(@Valid @RequestBody LoyaltyDTO dto) {
+    public Mono<LoyaltyDTO> createLoyalty(@Valid @RequestBody LoyaltyDTO dto) {
         return userService.loyaltyTransactionMono(dto)
-                .doOnSuccess(tx -> log.info("Successfully created loyalty transaction: {}", tx.getId()))
+                .doOnSuccess(tx -> log.info("Successfully created loyalty transaction: {}", tx.id()))
                 .doOnError(error -> log.error("Failed to create loyalty transaction", error));
     }
 
     // -------------------- READ --------------------
     @GetMapping("/loyalty/{id}")
-    public Mono<ResponseEntity<LoyaltyTransaction>> getLoyaltyById(@PathVariable Long id) {
+    public Mono<ResponseEntity<LoyaltyDTO>> getLoyaltyById(@PathVariable Long id) {
         return userService.getLoyaltyById(id)
                 .map(ResponseEntity::ok)
                 .defaultIfEmpty(ResponseEntity.notFound().build())
@@ -50,7 +49,7 @@ public class UserController {
 
     // -------------------- UPDATE --------------------
     @PutMapping("/loyalty/{id}")
-    public Mono<ResponseEntity<LoyaltyTransaction>> updateLoyalty(
+    public Mono<ResponseEntity<LoyaltyDTO>> updateLoyalty(
             @PathVariable Long id,
             @Valid @RequestBody LoyaltyDTO dto
     ) {

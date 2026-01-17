@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
-@RequestMapping("api/v1/search")
+@RequestMapping("/search")
 public class SearchController {
 
     private final GuestQueryMethod queryMethod;
