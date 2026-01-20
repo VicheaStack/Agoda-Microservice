@@ -15,4 +15,9 @@ public interface InventoryService {
     Page<Inventory> findAll(Pageable pageable);
     void deleteStockById(Long id);
 
+    // Business logic
+    Page<Inventory> findByItemNameIgnoreCase(String itemName, Pageable pageable);
+    Page<Inventory> findByStatusContainingIgnoreCase(String status, Pageable pageable);
+    Page<Inventory> findByCategoryContainingIgnoreCase(String category, Pageable pageable);
+
 }

@@ -57,16 +57,27 @@ public class InventoryServiceImpl implements InventoryService {
 
     @Override
     public void deleteStockById(Long id) {
-        if (inventoryRepository.existsById(id)) {
+        if (!inventoryRepository.existsById(id)) {
             throw new RuntimeException("item not found by id");
-        } else {
-            inventoryRepository.deleteById(id);
         }
+            inventoryRepository.deleteById(id);
     }
 
+    @Override
     public Page<Inventory> findByItemNameIgnoreCase(String itemName ,Pageable pageable){
         return inventoryRepository
                 .findByItemNameIgnoreCase(itemName, pageable);
+    }
+
+    @Override
+    public Page<Inventory> findByStatusContainingIgnoreCase(String status, Pageable pageable){
+        return inventoryRepository
+                .findByStatusContainingIgnoreCase(status, pageable);
+    }
+
+    @Override
+    public Page<Inventory> findByCategoryContainingIgnoreCase(String category, Pageable pageable){
+        return inventoryRepository.findByCategoryContainingIgnoreCase(category, pageable);
     }
 
 }
