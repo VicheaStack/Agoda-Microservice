@@ -4,6 +4,7 @@ import com.example.booking_service.dto.BookingDto;
 import com.example.booking_service.entity.Booking;
 import com.example.booking_service.mapper.BookingMapper;
 import com.example.booking_service.service.BookingService;
+import com.example.booking_service.serviceImpl.BookingServiceEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -17,7 +18,8 @@ public class BookingController {
     private final BookingService bookingService;
     private final BookingMapper mapper;
 
-    public BookingController(BookingService bookingService, BookingMapper mapper) {
+    public BookingController(BookingService bookingService,
+                             BookingMapper mapper) {
         this.bookingService = bookingService;
         this.mapper = mapper;
     }

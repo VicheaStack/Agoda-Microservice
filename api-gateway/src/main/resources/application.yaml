@@ -5,11 +5,10 @@ spring:
   cloud:
     gateway:
       default-filters:
-        - AddRequestHeader=X-Correlation-ID, #{T(java.util.UUID).randomUUID()}
+        - AddRequestHeader=X-Correlation-ID, "#{T(java.util.UUID).randomUUID()}"
         - AddResponseHeader=X-Gateway-log, Active
 
       routes:
-
         - id: guest-service
           uri: lb://GUEST-SERVICE
           predicates:
@@ -81,6 +80,7 @@ spring:
                 redis-rate-limiter.replenishRate: 10
                 redis-rate-limiter.burstCapacity: 20
                 key-resolver: "#{@ipKeyResolver}"
+
   data:
     redis:
       host: localhost
