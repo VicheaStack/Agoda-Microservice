@@ -1,6 +1,7 @@
 package com.hotel.controller;
 
 import com.hotel.dto.RoomDTO;
+import com.hotel.dto.RoomRequestDTO;
 import com.hotel.entity.Room;
 import com.hotel.mapper.RoomMapper;
 import com.hotel.service.RoomService;
@@ -23,15 +24,16 @@ public class RoomController {
 
     // CREATE ROOM
     @PostMapping
-    public ResponseEntity<RoomDTO> create(@RequestBody RoomDTO dto) {
-        Room room = mapper.toEntity(dto);
-        Room saved = roomService.create(room);
-        return ResponseEntity.ok(mapper.toDto(saved));
+    public ResponseEntity<RoomDTO> create(@RequestBody RoomRequestDTO dto) {
+        Room entity = mapper.toEntity(dto);
+        Room saved = roomService.create(entity);
+        RoomDTO response = mapper.toDto(saved);
+        return ResponseEntity.ok(response);
     }
 
     // UPDATE ROOM
     @PutMapping("/{id}")
-    public ResponseEntity<RoomDTO> update(@PathVariable Long id, @RequestBody RoomDTO dto) {
+    public ResponseEntity<RoomDTO> update(@PathVariable Long id, @RequestBody RoomRequestDTO dto) {
         Room updated = roomService.update(mapper.toEntity(dto), id);
         return ResponseEntity.ok(mapper.toDto(updated));
     }
