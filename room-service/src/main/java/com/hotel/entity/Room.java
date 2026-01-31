@@ -51,7 +51,7 @@ public class Room {
     private RoomStatus status = RoomStatus.AVAILABLE;
 
     // 🔴 MAIN FIX
-    @Column(name = "price", nullable = false)
+    @Column(name = "price_per_night", nullable = false)
     private BigDecimal pricePerNight;
 
     @Column(nullable = false)
