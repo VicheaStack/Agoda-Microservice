@@ -36,9 +36,9 @@ spring:
         - id: booking-service
           uri: lb://BOOKING-SERVICE
           predicates:
-            - Path=/api/v1/booking/**
+            - Path=/booking/**
           filters:
-            - StripPrefix=3
+            - StripPrefix=1
             - name: RequestRateLimiter
               args:
                 redis-rate-limiter.replenishRate: 10
@@ -48,9 +48,9 @@ spring:
         - id: room-service
           uri: lb://ROOM-SERVICE
           predicates:
-            - Path=/api/v1/rooms/**
+            - Path=/room/**
           filters:
-            - StripPrefix=3
+            - StripPrefix=2
             - name: RequestRateLimiter
               args:
                 redis-rate-limiter.replenishRate: 10
