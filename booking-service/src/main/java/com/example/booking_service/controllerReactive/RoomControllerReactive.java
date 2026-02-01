@@ -13,7 +13,7 @@ import reactor.core.publisher.Mono;
 @Validated
 @Slf4j
 @RestController
-@RequestMapping("/room")
+@RequestMapping("/api/v1/rooms")
 public class RoomControllerReactive {
 
     private final RoomServiceReactive roomService;

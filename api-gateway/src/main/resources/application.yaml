@@ -1,7 +1,6 @@
-server:
-  port: 8080
-
 spring:
+  application:
+    name: api-gateway
   cloud:
     gateway:
       default-filters:
@@ -36,14 +35,24 @@ spring:
         - id: booking-service
           uri: lb://BOOKING-SERVICE
           predicates:
-            - Path=/booking/**
+            - Path=/api/v1/bookings/**
+            - Path=/api/v1/promotions/**
+            - Path=/api/v1/reviews/**
+            - Path=/api/v1/guests/**
+            - Path=/api/v1/loyalty/**
+            - Path=/api/v1/rooms/**
           filters:
-            - StripPrefix=1
+            - StripPrefix=0
+            - AddRequestHeader=X-Request-Id, "#{T(java.util.UUID).randomUUID()}"
             - name: RequestRateLimiter
               args:
                 redis-rate-limiter.replenishRate: 10
                 redis-rate-limiter.burstCapacity: 20
                 key-resolver: "#{@ipKeyResolver}"
+            - name: CircuitBreaker
+              args:
+                name: bookingCircuit
+                fallbackUri: forward:/fallback/booking
 
         - id: room-service
           uri: lb://ROOM-SERVICE
@@ -85,6 +94,9 @@ spring:
     redis:
       host: localhost
       port: 6379
+
+server:
+  port: 8080
 
 eureka:
   client:
