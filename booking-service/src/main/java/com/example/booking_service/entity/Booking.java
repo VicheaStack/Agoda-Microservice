@@ -1,4 +1,3 @@
-// booking-service/src/main/java/com/hotel/booking/entity/Booking.java
 package com.example.booking_service.entity;
 
 import com.example.booking_service.Enum.BookingStatus;
@@ -30,12 +29,19 @@ public class Booking {
     @Column(name = "guest_id", nullable = false)
     private Long guestId;
 
+    @Column(nullable = false)
     private String guestName;
+
+    @Column(nullable = false)
     private String guestEmail;
 
     @Column(name = "room_id", nullable = false)
     private Long roomId;
+
+    @Column(nullable = false)
     private String roomNumber;
+
+    @Column(nullable = false)
     private String roomType;
 
     @Column(nullable = false)
@@ -47,7 +53,8 @@ public class Booking {
     private LocalDateTime actualCheckIn;
     private LocalDateTime actualCheckOut;
 
-    private Integer numberOfGuests;
+    @Builder.Default
+    private Integer numberOfGuests = 1;
 
     private String specialRequests;
     private String cancellationReason;
@@ -57,6 +64,7 @@ public class Booking {
     @Builder.Default
     private BookingStatus status = BookingStatus.PENDING;
 
+    @Column(nullable = false)
     private BigDecimal totalAmount;
 
     @Builder.Default
@@ -73,14 +81,27 @@ public class Booking {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
-    // Helper method to calculate final amount
+    @Version
+    private Long version;
+
+    // Auto-generate booking reference if null
     @PrePersist
+    private void generateBookingReference() {
+        if (this.bookingReference == null) {
+            this.bookingReference = "BOOK-" + System.currentTimeMillis();
+        }
+    }
+
+    // Calculate final amount
     @PreUpdate
     private void calculateFinalAmount() {
         if (totalAmount != null) {
             this.finalAmount = totalAmount
                     .subtract(discountAmount != null ? discountAmount : BigDecimal.ZERO)
                     .add(taxAmount != null ? taxAmount : BigDecimal.ZERO);
+        } else {
+            this.totalAmount = BigDecimal.ZERO;
+            this.finalAmount = discountAmount.add(taxAmount);
         }
     }
 }
