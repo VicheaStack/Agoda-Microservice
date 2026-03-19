@@ -1,6 +1,5 @@
 package com.example.booking_service.serviceImpl;
 
-import com.example.booking_service.entity.Booking;
 import com.example.booking_service.entity.Reviews;
 import com.example.booking_service.execption.ResourceNotFoundException;
 import com.example.booking_service.repository.BookingRepository;
