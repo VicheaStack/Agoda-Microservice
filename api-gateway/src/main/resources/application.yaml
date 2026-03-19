@@ -1,49 +1,25 @@
 spring:
   application:
     name: api-gateway
+
   cloud:
     gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+
       default-filters:
-        - AddRequestHeader=X-Correlation-ID, "#{T(java.util.UUID).randomUUID()}"
-        - AddResponseHeader=X-Gateway-log, Active
+        - AddResponseHeader=X-Gateway-Log, Active
 
       routes:
-        - id: guest-service
-          uri: lb://GUEST-SERVICE
-          predicates:
-            - Path=/api/v1/guest/**
-          filters:
-            - StripPrefix=3
-            - name: RequestRateLimiter
-              args:
-                redis-rate-limiter.replenishRate: 10
-                redis-rate-limiter.burstCapacity: 20
-                key-resolver: "#{@ipKeyResolver}"
-
-        - id: loyalty-service
-          uri: lb://LOYALTY-SERVICE
-          predicates:
-            - Path=/api/v1/loyalty/**
-          filters:
-            - StripPrefix=3
-            - name: RequestRateLimiter
-              args:
-                redis-rate-limiter.replenishRate: 10
-                redis-rate-limiter.burstCapacity: 20
-                key-resolver: "#{@ipKeyResolver}"
-
+        # --- BOOKING SERVICE ---
         - id: booking-service
           uri: lb://BOOKING-SERVICE
           predicates:
             - Path=/api/v1/bookings/**
-            - Path=/api/v1/promotions/**
-            - Path=/api/v1/reviews/**
-            - Path=/api/v1/guests/**
-            - Path=/api/v1/loyalty/**
-            - Path=/api/v1/rooms/**
           filters:
-            - StripPrefix=0
-            - AddRequestHeader=X-Request-Id, "#{T(java.util.UUID).randomUUID()}"
+            - StripPrefix=2
             - name: RequestRateLimiter
               args:
                 redis-rate-limiter.replenishRate: 10
@@ -54,10 +30,11 @@ spring:
                 name: bookingCircuit
                 fallbackUri: forward:/fallback/booking
 
+        # --- ROOM SERVICE ---
         - id: room-service
           uri: lb://ROOM-SERVICE
           predicates:
-            - Path=/room/**
+            - Path=/api/v1/room/**
           filters:
             - StripPrefix=2
             - name: RequestRateLimiter
@@ -66,30 +43,59 @@ spring:
                 redis-rate-limiter.burstCapacity: 20
                 key-resolver: "#{@ipKeyResolver}"
 
+        # --- GUEST SERVICE ---
+        - id: guest-service
+          uri: lb://GUEST-SERVICE
+          predicates:
+            - Path=/api/v1/guest/**
+          filters:
+            - StripPrefix=2
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+                key-resolver: "#{@ipKeyResolver}"
+
+        # --- LOYALTY SERVICE ---
+        - id: loyalty-service
+          uri: lb://LOYALTY-SERVICE
+          predicates:
+            - Path=/api/v1/loyalty/**
+          filters:
+            - StripPrefix=2
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+                key-resolver: "#{@ipKeyResolver}"
+
+        # --- STAFF SERVICE ---
         - id: staff-service
           uri: lb://STAFF-SERVICE
           predicates:
             - Path=/api/v1/staffs/**
           filters:
-            - StripPrefix=3
+            - StripPrefix=2
             - name: RequestRateLimiter
               args:
                 redis-rate-limiter.replenishRate: 10
                 redis-rate-limiter.burstCapacity: 20
                 key-resolver: "#{@ipKeyResolver}"
 
+        # --- SERVICE MANAGEMENT ---
         - id: service-management
           uri: lb://SERVICE-MANAGEMENT
           predicates:
             - Path=/api/v1/service/**
           filters:
-            - StripPrefix=3
+            - StripPrefix=2
             - name: RequestRateLimiter
               args:
                 redis-rate-limiter.replenishRate: 10
                 redis-rate-limiter.burstCapacity: 20
                 key-resolver: "#{@ipKeyResolver}"
 
+  # Fixed Redis Indentation (2 spaces only)
   data:
     redis:
       host: localhost
@@ -102,3 +108,10 @@ eureka:
   client:
     service-url:
       defaultZone: http://localhost:8761/eureka/
+
+logging:
+  level:
+    org.springframework.cloud.gateway: TRACE
+    org.springframework.http.server.reactive: DEBUG
+    org.springframework.web.reactive: DEBUG
+    reactor.netty.http.client: DEBUG
