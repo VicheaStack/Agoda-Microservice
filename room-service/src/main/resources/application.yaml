@@ -18,7 +18,7 @@ spring:
     open-in-view: false
 
   flyway:
-    enabled: true
+    enabled: false
     locations: classpath:db/migrate
     baseline-on-migrate: false
 
@@ -57,4 +57,6 @@ management:
 
 logging:
   level:
-    root: INFO
+    com.hotel: DEBUG
+    org.springframework.web: DEBUG
+    org.hibernate: DEBUG
