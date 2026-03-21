@@ -4,6 +4,7 @@ import jakarta.validation.constraints.*;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDate; // Don't forget this import!
 
 @Getter
 @Setter
@@ -31,6 +32,17 @@ public class BookingCreateRequestDTO {
         @NotBlank
         private String roomType;
 
+        // --- ADD THESE THREE FIELDS ---
+        @NotNull
+        private LocalDate checkInDate;
+
+        @NotNull
+        private LocalDate checkOutDate;
+
+        private String status;
+        // ------------------------------
+
+        @Builder.Default // Use this so Lombok doesn't overwrite with null
         @Min(1)
         private Integer numberOfGuests = 1;
 
@@ -41,6 +53,9 @@ public class BookingCreateRequestDTO {
         @DecimalMin("0.0")
         private BigDecimal totalAmount;
 
+        @Builder.Default
         private BigDecimal discountAmount = BigDecimal.ZERO;
+
+        @Builder.Default
         private BigDecimal taxAmount = BigDecimal.ZERO;
 }
