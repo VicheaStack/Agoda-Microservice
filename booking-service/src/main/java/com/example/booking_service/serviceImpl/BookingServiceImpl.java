@@ -1,16 +1,21 @@
 package com.example.booking_service.serviceImpl;
 
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
 import com.example.booking_service.Enum.BookingStatus;
-import com.example.booking_service.dto.RoomBookingSnapshotDTO;
 import com.example.booking_service.entity.Booking;
 import com.example.booking_service.execption.ResourceNotFoundException;
 import com.example.booking_service.repository.BookingRepository;
 import com.example.booking_service.service.BookingService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.time.Duration;
+import java.util.Objects;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -26,29 +31,38 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public Booking create(Booking booking) {
-        log.info("Start booking process for room {} :" , booking.getId());
+    public Mono<Booking> create(Booking booking) {
+        log.info("Start booking process for room: {}", booking.getRoomId());
 
-        Page<RoomBookingSnapshotDTO> block = roomServiceReactive
-                .checkRoomAvailability(0, 10)
-                .block(Duration.ofSeconds(10));
+        // Fetch up to 100 rooms (adjust as needed)
+        return roomServiceReactive.checkRoomAvailability(0, 100)
+                .flatMap(rooms -> {
+                    if (rooms == null || rooms.isEmpty()) {
+                        log.error("No available rooms returned from Room Service");
+                        return Mono.error(new RuntimeException("Room Service returned no data"));
+                    }
 
-        assert block != null;
-        boolean available = block.stream()
-                .anyMatch(room -> room.getRoomId().equals(booking.getRoomId()));
+                    boolean available = rooms.stream()
+                            .anyMatch(room -> Objects.equals(room.getRoomId(), booking.getRoomId()));
 
-        if(!available) {
-            log.error("Room {} is not available for booking", booking.getRoomId());
-            throw new RuntimeException("Selected room not available");
-        }
+                    if (!available) {
+                        log.error("Room {} is not available for booking", booking.getRoomId());
+                        return Mono.error(new RuntimeException("Selected room not available"));
+                    }
 
-        booking.setStatus(BookingStatus.PENDING);
-        Booking savedBooking = repository.save(booking);
+                    booking.setStatus(BookingStatus.PENDING);
+                    if (booking.getBookingReference() == null) {
+                        booking.setBookingReference("BK-" + UUID.randomUUID().toString().substring(0, 8));
+                    }
 
-        log.info("Booking save successfully with reference {} ", savedBooking.getBookingReference());
-        return savedBooking;
+                    return Mono.fromCallable(() -> repository.save(booking))
+                            .subscribeOn(Schedulers.boundedElastic());
+                })
+                .timeout(Duration.ofSeconds(5));
     }
 
+    @CacheEvict(value = "bookings", key = "#id")
+    @Transactional
     @Override
     public Booking update(Booking booking, Long id) {
         Booking existing = repository.findById(id)
@@ -69,13 +83,16 @@ public class BookingServiceImpl implements BookingService {
         return repository.save(existing);
     }
 
-
+    @Cacheable(value = "bookings", key = "#id")
+    @Transactional(readOnly = true)
     @Override
     public Booking getById(Long id) {
         return repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Booking not found"));
     }
 
+    @CacheEvict(value = "#bookings", key = "#id")
+    @Transactional
     @Override
     public void delete(Long id) {
         if(repository.existsById(id)){
