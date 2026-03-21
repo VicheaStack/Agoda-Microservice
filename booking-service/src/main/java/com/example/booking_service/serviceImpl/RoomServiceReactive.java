@@ -1,6 +1,7 @@
 package com.example.booking_service.serviceImpl;
 
 import com.example.booking_service.dto.PageResponse;
+import com.example.booking_service.dto.RoomAvailabilityPage;
 import com.example.booking_service.dto.RoomBookingSnapshotDTO;
 import com.example.booking_service.dto.RoomDTO;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -14,6 +15,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
+import java.util.List;
 
 @Service
 public class RoomServiceReactive {
@@ -27,7 +29,7 @@ public class RoomServiceReactive {
     // Create room
     public Mono<RoomDTO> createRoom(RoomDTO request) {
         return webClient.post()
-                .uri("/room")
+                .uri("/rooms")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(request)
                 .retrieve()
@@ -37,23 +39,17 @@ public class RoomServiceReactive {
 
     // Check room availability - GET with query params
     // Change the method signature to return PageImpl instead of Page
-    public Mono<Page<RoomBookingSnapshotDTO>> checkRoomAvailability(int page, int size) {
+    public Mono<List<RoomBookingSnapshotDTO>> checkRoomAvailability(int page, int size) {
         return webClient.get()
                 .uri(uriBuilder -> uriBuilder
-                        .path("/room/availability")
+                        .path("/rooms/availability")
                         .queryParam("page", page)
                         .queryParam("size", size)
                         .build())
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
-                .bodyToMono(new ParameterizedTypeReference<PageResponse<RoomBookingSnapshotDTO>>() {})
-                .<Page<RoomBookingSnapshotDTO>>map(pageResponse ->
-                        new PageImpl<>(
-                                pageResponse.getContent(),
-                                PageRequest.of(pageResponse.getCurrentPage(), pageResponse.getSize()),
-                                pageResponse.getTotalElement()
-                        )
-                )
+                .bodyToMono(RoomAvailabilityPage.class)  // parse outer wrapper
+                .map(RoomAvailabilityPage::getContent)   // extract the list
                 .timeout(Duration.ofSeconds(3));
     }
 
@@ -61,7 +57,7 @@ public class RoomServiceReactive {
     // Update room - returns RoomDTO
     public Mono<RoomDTO> updateRoom(RoomDTO request, Long id) {
         return webClient.put()
-                .uri("/room/{id}", id)
+                .uri("/rooms/{id}", id)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(request)
                 .retrieve()
@@ -82,7 +78,7 @@ public class RoomServiceReactive {
     // Delete room
     public Mono<Void> deleteRoom(Long roomId) {
         return webClient.delete()
-                .uri("/room/{id}", roomId)
+                .uri("/rooms/{id}", roomId)
                 .retrieve()
                 .bodyToMono(Void.class)  // ✅ Correct for empty response
                 .timeout(Duration.ofSeconds(3));
