@@ -6,13 +6,15 @@ import com.example.booking_service.entity.Booking;
 import com.example.booking_service.mapper.BookingMapper;
 import com.example.booking_service.service.BookingService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Mono;
 
 @Slf4j
 @RestController
-@RequestMapping("/bookings")
+@RequestMapping("/api/v1/bookings")
 public class BookingController {
 
     private final BookingService bookingService;
@@ -24,12 +26,13 @@ public class BookingController {
         this.mapper = mapper;
     }
 
+    @ResponseStatus(HttpStatus.CREATED)
     @PostMapping
-    public ResponseEntity<BookingDto> createBooking(@Validated @RequestBody BookingCreateRequestDTO dto) {
+    public Mono<ResponseEntity<BookingDto>> createBooking(@Validated @RequestBody BookingCreateRequestDTO dto) {
         Booking entity = mapper.toEntity(dto);
-        Booking saved = bookingService.create(entity);
-        return ResponseEntity.ok(mapper.toDto(saved));
-
+        return bookingService.create(entity)
+                .map(mapper::toDto)
+                .map(ResponseEntity::ok);
     }
 
     @PutMapping("/{id}")
