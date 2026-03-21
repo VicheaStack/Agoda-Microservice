@@ -17,9 +17,9 @@ spring:
         - id: booking-service
           uri: lb://BOOKING-SERVICE
           predicates:
-            - Path=/api/v1/bookings/**
+            - Path=/api/v1/bookings/**, /api/v1/room/**
           filters:
-            - StripPrefix=2
+            - StripPrefix=0
             - name: RequestRateLimiter
               args:
                 redis-rate-limiter.replenishRate: 10
@@ -34,9 +34,9 @@ spring:
         - id: room-service
           uri: lb://ROOM-SERVICE
           predicates:
-            - Path=/api/v1/room/**
+            - Path=/api/v1/rooms/**
           filters:
-            - StripPrefix=2
+            - StripPrefix=0
             - name: RequestRateLimiter
               args:
                 redis-rate-limiter.replenishRate: 10
@@ -115,3 +115,16 @@ logging:
     org.springframework.http.server.reactive: DEBUG
     org.springframework.web.reactive: DEBUG
     reactor.netty.http.client: DEBUG
+
+management:
+  tracing:
+    sampling:
+      probability: 1.0
+  zipkin:
+    tracing:
+      endpoint: http://localhost:9411/api/v2/spans
+  endpoints:
+    web:
+      exposure:
+        include: health, info, tracing, circuitbreakers
+
