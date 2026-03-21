@@ -1,6 +1,7 @@
 package com.example.booking_service.dto;
 
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
@@ -12,6 +13,7 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 public class RoomBookingSnapshotDTO {
 
+    @JsonProperty("id")
     @NotNull
     private Long roomId;
 
@@ -24,7 +26,6 @@ public class RoomBookingSnapshotDTO {
     @NotNull
     private Boolean available;
 
-    // 🔴 price at booking time (snapshot, NOT dynamic)
     @NotNull
     private BigDecimal pricePerNight;
 
