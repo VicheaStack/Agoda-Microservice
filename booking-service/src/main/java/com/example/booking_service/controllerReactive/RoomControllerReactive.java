@@ -4,16 +4,17 @@ import com.example.booking_service.dto.RoomBookingSnapshotDTO;
 import com.example.booking_service.dto.RoomDTO;
 import com.example.booking_service.serviceImpl.RoomServiceReactive;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
+
 @Validated
 @Slf4j
 @RestController
-@RequestMapping("/api/v1/rooms")
+@RequestMapping("/api/v1/room")
 public class RoomControllerReactive {
 
     private final RoomServiceReactive roomService;
@@ -61,13 +62,11 @@ public class RoomControllerReactive {
     }
 
     @GetMapping("/availability")
-    public Mono<Page<RoomBookingSnapshotDTO>> checkAvailability(
+    public Mono<List<RoomBookingSnapshotDTO>> checkAvailability(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         return roomService.checkRoomAvailability(page, size)
-                .doOnSuccess(pageResult ->
-                        log.info("Found {} available rooms", pageResult.getTotalElements()))
-                .doOnError(error ->
-                        log.error("Error checking availability: {}", error.getMessage()));
+                .doOnSuccess(rooms -> log.info("Found {} available rooms", rooms.size()))
+                .doOnError(error -> log.error("Error checking availability: {}", error.getMessage()));
     }
 }
