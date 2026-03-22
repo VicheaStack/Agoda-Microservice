@@ -12,6 +12,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
@@ -39,7 +40,7 @@ public class RoomServiceReactive {
 
     // Check room availability - GET with query params
     // Change the method signature to return PageImpl instead of Page
-    public Mono<List<RoomBookingSnapshotDTO>> checkRoomAvailability(int page, int size) {
+    public Flux<RoomBookingSnapshotDTO> checkRoomAvailability(int page, int size) {
         return webClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/rooms/availability")
@@ -49,10 +50,9 @@ public class RoomServiceReactive {
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
                 .bodyToMono(RoomAvailabilityPage.class)  // parse outer wrapper
-                .map(RoomAvailabilityPage::getContent)   // extract the list
-                .timeout(Duration.ofSeconds(3));
+                .timeout(Duration.ofSeconds(3))
+                .flatMapMany(pageData -> Flux.fromIterable(pageData.getContent()));
     }
-
 
     // Update room - returns RoomDTO
     public Mono<RoomDTO> updateRoom(RoomDTO request, Long id) {
