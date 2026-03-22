@@ -7,9 +7,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
-import java.util.List;
 
 @Validated
 @Slf4j
@@ -62,11 +61,13 @@ public class RoomControllerReactive {
     }
 
     @GetMapping("/availability")
-    public Mono<List<RoomBookingSnapshotDTO>> checkAvailability(
+    public Flux<RoomBookingSnapshotDTO> checkAvailability(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
+
         return roomService.checkRoomAvailability(page, size)
-                .doOnSuccess(rooms -> log.info("Found {} available rooms", rooms.size()))
-                .doOnError(error -> log.error("Error checking availability: {}", error.getMessage()));
+                .doOnNext(room -> log.info("Room available: {}", room.getRoomId()))
+                .doOnComplete(() -> log.info("Finished fetching available rooms"))
+                .doOnError(error -> log.error("Error checking availability", error));
     }
 }
