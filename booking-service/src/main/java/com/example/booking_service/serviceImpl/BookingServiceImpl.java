@@ -34,10 +34,10 @@ public class BookingServiceImpl implements BookingService {
     public Mono<Booking> create(Booking booking) {
         log.info("Start booking process for room: {}", booking.getRoomId());
 
-        // Fetch up to 100 rooms (adjust as needed)
         return roomServiceReactive.checkRoomAvailability(0, 100)
+                .collectList() // convert Flux<RoomBookingSnapshotDTO> -> Mono<List<…>>
                 .flatMap(rooms -> {
-                    if (rooms == null || rooms.isEmpty()) {
+                    if (rooms.isEmpty()) {
                         log.error("No available rooms returned from Room Service");
                         return Mono.error(new RuntimeException("Room Service returned no data"));
                     }
@@ -58,7 +58,8 @@ public class BookingServiceImpl implements BookingService {
                     return Mono.fromCallable(() -> repository.save(booking))
                             .subscribeOn(Schedulers.boundedElastic());
                 })
-                .timeout(Duration.ofSeconds(5));
+                .timeout(Duration.ofSeconds(5))
+                .doOnError(error -> log.error("Booking failed: {}", error.getMessage()));
     }
 
     @CacheEvict(value = "bookings", key = "#id")
@@ -68,7 +69,6 @@ public class BookingServiceImpl implements BookingService {
         Booking existing = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
 
-        // Allowed to update
         existing.setGuestName(booking.getGuestName());
         existing.setGuestEmail(booking.getGuestEmail());
         existing.setActualCheckIn(booking.getActualCheckIn());
@@ -91,15 +91,14 @@ public class BookingServiceImpl implements BookingService {
                 .orElseThrow(() -> new RuntimeException("Booking not found"));
     }
 
-    @CacheEvict(value = "#bookings", key = "#id")
+    @CacheEvict(value = "bookings", key = "#id")
     @Transactional
     @Override
     public void delete(Long id) {
-        if(repository.existsById(id)){
+        if (repository.existsById(id)) {
             repository.deleteById(id);
         } else {
             throw new RuntimeException("Booking not found");
         }
     }
-
 }
