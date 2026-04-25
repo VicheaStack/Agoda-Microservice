@@ -22,7 +22,6 @@ public class ReviewsController {
         this.mapper = mapper;
     }
 
-    // ========================= CREATE =========================
     @PostMapping
     public ResponseEntity<ReviewsDto> create(@Validated @RequestBody ReviewsDto dto) {
         Reviews entity = mapper.toEntity(dto);
@@ -30,7 +29,6 @@ public class ReviewsController {
         return ResponseEntity.ok(mapper.toDto(created));
     }
 
-    // ========================= UPDATE =========================
     @PutMapping("/{id}")
     public ResponseEntity<ReviewsDto> update(@Validated @PathVariable Long id,
                                              @RequestBody ReviewsDto dto) {
@@ -39,14 +37,12 @@ public class ReviewsController {
         return ResponseEntity.ok(mapper.toDto(updated));
     }
 
-    // ========================= GET BY ID =========================
     @GetMapping("/{id}")
     public ResponseEntity<ReviewsDto> findById(@PathVariable Long id) {
         Reviews found = reviewsService.getById(id);
         return ResponseEntity.ok(mapper.toDto(found));
     }
 
-    // ========================= DELETE =========================
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         reviewsService.delete(id);

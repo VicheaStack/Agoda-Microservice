@@ -49,9 +49,8 @@ public class RoomServiceReactive {
                         .build())
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
-                .bodyToMono(RoomAvailabilityPage.class)  // parse outer wrapper
-                .timeout(Duration.ofSeconds(3))
-                .flatMapMany(pageData -> Flux.fromIterable(pageData.getContent()));
+                .bodyToFlux(RoomBookingSnapshotDTO.class)  // parse outer wrapper
+                .timeout(Duration.ofSeconds(3));
     }
 
     // Update room - returns RoomDTO
@@ -73,6 +72,15 @@ public class RoomServiceReactive {
                 .retrieve()
                 .bodyToMono(RoomBookingSnapshotDTO.class)  // Changed to RoomDTO
                 .timeout(Duration.ofSeconds(3));
+    }
+
+    public Mono<Boolean> isRoomAvailable(Long roomId) {
+        return webClient.get()
+                .uri("/rooms/{roomId}/availability", roomId)
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .bodyToMono(Boolean.class)
+                .defaultIfEmpty(false);   // safety: if anything goes wrong, assume not available
     }
 
     // Delete room

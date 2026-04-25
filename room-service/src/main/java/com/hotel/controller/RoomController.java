@@ -5,11 +5,14 @@ import com.hotel.dto.RoomRequestDTO;
 import com.hotel.entity.Room;
 import com.hotel.mapper.RoomMapper;
 import com.hotel.service.RoomService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Mono;
 
+@Slf4j
 @RestController
 @RequestMapping("api/v1/rooms")
 public class RoomController {
@@ -60,5 +63,12 @@ public class RoomController {
         Page<Room> availableRooms = roomService.checkAvailability(PageRequest.of(page, size));
         Page<RoomDTO> dtoPage = availableRooms.map(mapper::toDto);
         return ResponseEntity.ok(dtoPage);
+    }
+
+    @GetMapping("/{roomId}/availability")
+    public Mono<Boolean> checkAvailability(@PathVariable Long roomId) {
+        return roomService.isRoomAvailable(roomId)   // no wrapping needed
+                .doOnSuccess(available -> log.info("Room {} available: {}", roomId, available))
+                .doOnError(error -> log.error("Error checking room {}: {}", roomId, error.getMessage()));
     }
 }

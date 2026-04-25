@@ -26,40 +26,33 @@ public class RoomControllerReactive {
     @ResponseStatus(HttpStatus.CREATED)
     public Mono<RoomDTO> createRoom(@RequestBody RoomDTO dto) {
         return roomService.createRoom(dto)
-                .doOnSuccess(room ->
-                        log.info("Room created successfully: {}", room.getRoomNumber()))
-                .doOnError(error ->
-                        log.error("Error creating room: {}", error.getMessage()));
+                .doOnSuccess(room -> log.info("Room created successfully: {}", room.getRoomNumber()))
+                .doOnError(error -> log.error("Error creating room: {}", error.getMessage()));
     }
 
     @GetMapping("/{id}")
     public Mono<RoomBookingSnapshotDTO> getRoomById(@PathVariable Long id) {
         return roomService.getRoomById(id)
-                .doOnSuccess(room ->
-                        log.info("Retrieved room: {}", room.getRoomNumber()))
-                .doOnError(error ->
-                        log.error("Error retrieving room {}: {}", id, error.getMessage()));
+                .doOnSuccess(room -> log.info("Retrieved room: {}", room.getRoomId()))
+                .doOnError(error -> log.error("Error retrieving room {}: {}", id, error.getMessage()));
     }
 
     @PutMapping("/{id}")
     public Mono<RoomDTO> updateRoom(@PathVariable Long id, @RequestBody RoomDTO dto) {
         return roomService.updateRoom(dto, id)
-                .doOnSuccess(room ->
-                        log.info("Updated room: {}", room.getRoomNumber()))
-                .doOnError(error ->
-                        log.error("Error updating room {}: {}", id, error.getMessage()));
+                .doOnSuccess(room -> log.info("Updated room: {}", room.getRoomNumber()))
+                .doOnError(error -> log.error("Error updating room {}: {}", id, error.getMessage()));
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public Mono<Void> deleteRoom(@PathVariable Long id) {
         return roomService.deleteRoom(id)
-                .doOnSuccess(unused ->
-                        log.info("Deleted room with ID: {}", id))
-                .doOnError(error ->
-                        log.error("Error deleting room {}: {}", id, error.getMessage()));
+                .doOnSuccess(unused -> log.info("Deleted room with ID: {}", id))
+                .doOnError(error -> log.error("Error deleting room {}: {}", id, error.getMessage()));
     }
 
+    // ── existing paginated availability for list display ──
     @GetMapping("/availability")
     public Flux<RoomBookingSnapshotDTO> checkAvailability(
             @RequestParam(defaultValue = "0") int page,
@@ -69,5 +62,13 @@ public class RoomControllerReactive {
                 .doOnNext(room -> log.info("Room available: {}", room.getRoomId()))
                 .doOnComplete(() -> log.info("Finished fetching available rooms"))
                 .doOnError(error -> log.error("Error checking availability", error));
+    }
+
+    // ── NEW: single‑room availability check (for booking validation) ──
+    @GetMapping("/{roomId}/availability")
+    public Mono<Boolean> checkRoomAvailability(@PathVariable Long roomId) {
+        return roomService.isRoomAvailable(roomId)
+                .doOnSuccess(available -> log.info("Room {} available: {}", roomId, available))
+                .doOnError(error -> log.error("Error checking availability for room {}: {}", roomId, error));
     }
 }

@@ -34,33 +34,41 @@ public class BookingServiceImpl implements BookingService {
     public Mono<Booking> create(Booking booking) {
         log.info("Start booking process for room: {}", booking.getRoomId());
 
-        return roomServiceReactive.checkRoomAvailability(0, 100)
-                .collectList() // convert Flux<RoomBookingSnapshotDTO> -> Mono<List<…>>
-                .flatMap(rooms -> {
-                    if (rooms.isEmpty()) {
-                        log.error("No available rooms returned from Room Service");
-                        return Mono.error(new RuntimeException("Room Service returned no data"));
-                    }
-
-                    boolean available = rooms.stream()
-                            .anyMatch(room -> Objects.equals(room.getRoomId(), booking.getRoomId()));
-
+        return roomServiceReactive.isRoomAvailable(booking.getRoomId())
+                .timeout(Duration.ofSeconds(5))
+                .flatMap(available -> {
                     if (!available) {
-                        log.error("Room {} is not available for booking", booking.getRoomId());
+                        log.error("Room {} is not available", booking.getRoomId());
                         return Mono.error(new RuntimeException("Selected room not available"));
                     }
 
-                    booking.setStatus(BookingStatus.PENDING);
-                    if (booking.getBookingReference() == null) {
-                        booking.setBookingReference("BK-" + UUID.randomUUID().toString().substring(0, 8));
-                    }
+                    Booking bookingToSave = Booking.builder()
+                            .guestId(booking.getGuestId())
+                            .guestName(booking.getGuestName())
+                            .guestEmail(booking.getGuestEmail())
+                            .roomId(booking.getRoomId())
+                            .roomNumber(booking.getRoomNumber())
+                            .roomType(booking.getRoomType())
+                            .checkInDate(booking.getCheckInDate())
+                            .checkOutDate(booking.getCheckOutDate())
+                            .numberOfGuests(booking.getNumberOfGuests())
+                            .specialRequests(booking.getSpecialRequests())
+                            .totalAmount(booking.getTotalAmount())
+                            .discountAmount(booking.getDiscountAmount())
+                            .taxAmount(booking.getTaxAmount())
+                            .status(BookingStatus.PENDING)
+                            .bookingReference(generateBookingReference())
+                            .build();
 
-                    return Mono.fromCallable(() -> repository.save(booking))
-                            .subscribeOn(Schedulers.boundedElastic());
+                    return Mono.deferContextual(ctx ->
+                            Mono.fromCallable(() -> repository.save(bookingToSave))
+                                    .subscribeOn(Schedulers.boundedElastic())
+                                    .contextWrite(ctx)
+                    );
                 })
-                .timeout(Duration.ofSeconds(5))
                 .doOnError(error -> log.error("Booking failed: {}", error.getMessage()));
     }
+
 
     @CacheEvict(value = "bookings", key = "#id")
     @Transactional
@@ -100,5 +108,10 @@ public class BookingServiceImpl implements BookingService {
         } else {
             throw new RuntimeException("Booking not found");
         }
+    }
+
+    private String generateBookingReference() {
+        String raw = UUID.randomUUID().toString().replace("-", "");
+        return "BOOK-" + raw.substring(0, 12);
     }
 }

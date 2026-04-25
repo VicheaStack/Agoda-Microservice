@@ -104,4 +104,5 @@ public class Booking {
             this.finalAmount = discountAmount.add(taxAmount);
         }
     }
+
 }
