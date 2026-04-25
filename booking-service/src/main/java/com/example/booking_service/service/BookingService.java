@@ -4,7 +4,6 @@ import com.example.booking_service.entity.Booking;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
-@Service
 public interface BookingService {
 
    // Booking create(Booking booking);

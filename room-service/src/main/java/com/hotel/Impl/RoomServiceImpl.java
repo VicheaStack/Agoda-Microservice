@@ -9,6 +9,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -94,5 +96,12 @@ public class RoomServiceImpl implements RoomService {
             throw new ResourceNotFoundException("Room not found with id: " + id);
         }
         roomRepository.deleteById(id);
+    }
+
+    @Override
+    public Mono<Boolean> isRoomAvailable(Long roomId) {
+        return Mono.fromCallable(() ->
+                roomRepository.existsByIdAndStatus(roomId, RoomStatus.AVAILABLE)
+        ).subscribeOn(Schedulers.boundedElastic());   // offload blocking call
     }
 }

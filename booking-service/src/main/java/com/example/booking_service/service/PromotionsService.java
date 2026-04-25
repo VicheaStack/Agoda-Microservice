@@ -3,7 +3,6 @@ package com.example.booking_service.service;
 import com.example.booking_service.entity.Promotions;
 import org.springframework.stereotype.Service;
 
-@Service
 public interface PromotionsService {
 
     Promotions create(Promotions promotion);
