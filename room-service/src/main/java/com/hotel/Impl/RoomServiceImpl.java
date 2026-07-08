@@ -99,9 +99,7 @@ public class RoomServiceImpl implements RoomService {
     }
 
     @Override
-    public Mono<Boolean> isRoomAvailable(Long roomId) {
-        return Mono.fromCallable(() ->
-                roomRepository.existsByIdAndStatus(roomId, RoomStatus.AVAILABLE)
-        ).subscribeOn(Schedulers.boundedElastic());   // offload blocking call
+    public Boolean isRoomAvailable(Long roomId) {
+        return roomRepository.isRoomAvailable(roomId, RoomStatus.valueOf(RoomStatus.AVAILABLE.name()));
     }
 }

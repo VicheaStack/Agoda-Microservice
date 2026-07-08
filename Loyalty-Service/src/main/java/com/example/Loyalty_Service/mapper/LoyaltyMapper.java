@@ -1,23 +1,29 @@
 package com.example.Loyalty_Service.mapper;
 
 import com.example.Loyalty_Service.dto.LoyaltyDTO;
+import com.example.Loyalty_Service.dto.LoyaltyRequestDTO;
 import com.example.Loyalty_Service.model.Loyalty;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.Optional;
 
-@Service
+@Component
 public class LoyaltyMapper {
 
-    // Entity -> DTO
-    public LoyaltyDTO toDto(Loyalty loyalty) {
-        if (loyalty == null) return null;
+    private LoyaltyMapper() {
+        // Prevent instantiation
+    }
 
-        String transactionDateStr = null;
-        if (loyalty.getTransactionDate() != null) {
-            transactionDateStr = loyalty.getTransactionDate().toLocalDateTime().toString();
+    public LoyaltyDTO toDTO(Loyalty loyalty) {
+        if (loyalty == null) {
+            return null;
         }
+
+        LocalDateTime transactionDateTime = Optional.ofNullable(loyalty.getTransactionDate())
+                .map(Timestamp::toLocalDateTime)
+                .orElse(null);
 
         return new LoyaltyDTO(
                 loyalty.getId(),
@@ -26,33 +32,26 @@ public class LoyaltyMapper {
                 loyalty.getType(),
                 loyalty.getStatus(),
                 loyalty.getDescription(),
-                transactionDateStr
+                transactionDateTime
         );
     }
 
-    // DTO -> Entity
-    public Loyalty toEntity(LoyaltyDTO dto) {
-        if (dto == null) return null;
-
-        Timestamp transactionDate;
-        if (dto.transactionDate() != null && !dto.transactionDate().trim().isEmpty()) {
-            try {
-                transactionDate = Timestamp.valueOf(LocalDateTime.parse(dto.transactionDate()));
-            } catch (Exception e) {
-                transactionDate = new Timestamp(System.currentTimeMillis());
-            }
-        } else {
-            transactionDate = new Timestamp(System.currentTimeMillis());
+    public Loyalty toEntity(LoyaltyRequestDTO requestDTO) {
+        if (requestDTO == null) {
+            return null;
         }
 
-        return Loyalty.builder()
-                .id(dto.id())
-                .guestId(dto.guestId())
-                .points(dto.points())
-                .type(dto.type())
-                .status(dto.status())
-                .description(dto.description())
-                .transactionDate(transactionDate)
-                .build();
+        Loyalty loyalty = new Loyalty();
+        loyalty.setGuestId(requestDTO.guestId());
+        loyalty.setPoints(requestDTO.points());
+        loyalty.setType(requestDTO.type());
+        loyalty.setStatus(requestDTO.status());
+        loyalty.setDescription(requestDTO.description());
+
+        Optional.ofNullable(requestDTO.transactionDate())
+                .map(Timestamp::valueOf)
+                .ifPresent(loyalty::setTransactionDate);
+
+        return loyalty;
     }
 }

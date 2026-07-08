@@ -7,7 +7,7 @@ spring:
 
   datasource:
     url: jdbc:postgresql://localhost:5432/BookingService
-    username: phoneshop_night
+    username: vicheasql
     password: "vichea123"
     driver-class-name: org.postgresql.Driver
 

@@ -7,7 +7,7 @@ import reactor.core.publisher.Mono;
 public interface BookingService {
 
    // Booking create(Booking booking);
-    Mono<Booking> create(Booking booking);
+    Booking create(Booking booking);
     Booking update(Booking booking, Long id);
     Booking getById(Long id);
     void delete(Long id);

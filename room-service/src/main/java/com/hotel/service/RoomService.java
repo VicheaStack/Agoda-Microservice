@@ -13,5 +13,5 @@ public interface RoomService {
     Page<Room> checkAvailability(Pageable pageable);
     Room getById(Long id);
     void delete(Long id);
-    Mono<Boolean> isRoomAvailable(Long id);
+    Boolean isRoomAvailable(Long id);
 }

@@ -1,9 +1,7 @@
 package com.example.Loyalty_Service.service;
 
 import com.example.Loyalty_Service.model.Loyalty;
-import org.springframework.stereotype.Service;
 
-@Service
 public interface LoyaltyService {
 
     Loyalty create(Loyalty loyalty);
