@@ -66,9 +66,8 @@ public class RoomController {
     }
 
     @GetMapping("/{roomId}/availability")
-    public Mono<Boolean> checkAvailability(@PathVariable Long roomId) {
-        return roomService.isRoomAvailable(roomId)   // no wrapping needed
-                .doOnSuccess(available -> log.info("Room {} available: {}", roomId, available))
-                .doOnError(error -> log.error("Error checking room {}: {}", roomId, error.getMessage()));
+    public ResponseEntity<Boolean> checkAvailability(@PathVariable Long roomId) {
+        Boolean roomAvailable = roomService.isRoomAvailable(roomId);
+        return ResponseEntity.ok(roomAvailable);
     }
 }

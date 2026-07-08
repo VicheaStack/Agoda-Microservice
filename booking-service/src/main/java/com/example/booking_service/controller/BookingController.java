@@ -26,23 +26,23 @@ public class BookingController {
         this.mapper = mapper;
     }
 
-//    @ResponseStatus(HttpStatus.CREATED)
-//    @PostMapping
-//    public Mono<ResponseEntity<BookingDto>> createBooking(@Validated @RequestBody BookingCreateRequestDTO dto) {
-//        Booking entity = mapper.toEntity(dto);
-//        return bookingService.create(entity)
-//                .map(mapper::toDto)
-//                .map(ResponseEntity::ok);
-//    }
-
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping
-    public Mono<ResponseEntity<Booking>> create(@RequestBody Booking booking) {
-        return bookingService.create(booking)
-                .map(saved -> ResponseEntity.status(HttpStatus.CREATED).body(saved))
-                .onErrorResume(RuntimeException.class,
-                        ex -> Mono.just(ResponseEntity.badRequest().build()));
+    public ResponseEntity<BookingDto> createBooking(@Validated @RequestBody BookingCreateRequestDTO dto) {
+        Booking entity = mapper.toEntity(dto);
+        Booking booking = bookingService.create(entity);
+        BookingDto save = mapper.toDto(booking);
+        return ResponseEntity.ok(save);
     }
+
+//    @ResponseStatus(HttpStatus.CREATED)
+//    @PostMapping
+//    public ResponseEntity<Booking> create(@RequestBody Booking booking) {
+//        return bookingService.create(booking)
+//                .map(saved -> ResponseEntity.status(HttpStatus.CREATED).body(saved))
+//                .onErrorResume(RuntimeException.class,
+//                        ex -> Mono.just(ResponseEntity.badRequest().build()));
+//    }
 
     @PutMapping("/{id}")
     public ResponseEntity<BookingDto> updateBooking(@Validated @PathVariable Long id,

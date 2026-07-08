@@ -12,13 +12,13 @@ spring:
     # Local fallback configuration (used when config server is not running)
 
     url: jdbc:postgresql://localhost:5432/Guest
-    username: phoneshop_night
+    username: vicheasql
     password: "vichea123"
     driver-class-name: org.postgresql.Driver
 
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect

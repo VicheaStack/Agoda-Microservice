@@ -1,7 +1,5 @@
 package com.example.booking_service.config;
 
-
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -33,11 +31,4 @@ public class WebClientConfig {
                 .build();
     }
 
-    @Bean
-    @Qualifier("roomWebClient")
-    public WebClient roomServiceGateway(@LoadBalanced WebClient.Builder builder){
-        return builder
-                .baseUrl("http://ROOM-SERVICE")
-                .build();
-    }
 }

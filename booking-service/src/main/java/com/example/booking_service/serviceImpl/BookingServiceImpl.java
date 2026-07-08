@@ -22,53 +22,29 @@ import java.util.UUID;
 public class BookingServiceImpl implements BookingService {
 
     private final BookingRepository repository;
-    private final RoomServiceReactive roomServiceReactive;
+    private final RoomService roomService;
 
     public BookingServiceImpl(BookingRepository repository,
-                              RoomServiceReactive roomServiceReactive) {
+                              RoomService roomService) {
         this.repository = repository;
-        this.roomServiceReactive = roomServiceReactive;
+        this.roomService = roomService;
     }
 
     @Override
-    public Mono<Booking> create(Booking booking) {
-        log.info("Start booking process for room: {}", booking.getRoomId());
+    public Booking create(Booking booking) {
+       log.info("Start booking process for room: {}", booking.getRoomId());
 
-        return roomServiceReactive.isRoomAvailable(booking.getRoomId())
-                .timeout(Duration.ofSeconds(5))
-                .flatMap(available -> {
-                    if (!available) {
-                        log.error("Room {} is not available", booking.getRoomId());
-                        return Mono.error(new RuntimeException("Selected room not available"));
-                    }
+        Boolean roomAvailable = roomService.isRoomAvailable(booking.getRoomId());
 
-                    Booking bookingToSave = Booking.builder()
-                            .guestId(booking.getGuestId())
-                            .guestName(booking.getGuestName())
-                            .guestEmail(booking.getGuestEmail())
-                            .roomId(booking.getRoomId())
-                            .roomNumber(booking.getRoomNumber())
-                            .roomType(booking.getRoomType())
-                            .checkInDate(booking.getCheckInDate())
-                            .checkOutDate(booking.getCheckOutDate())
-                            .numberOfGuests(booking.getNumberOfGuests())
-                            .specialRequests(booking.getSpecialRequests())
-                            .totalAmount(booking.getTotalAmount())
-                            .discountAmount(booking.getDiscountAmount())
-                            .taxAmount(booking.getTaxAmount())
-                            .status(BookingStatus.PENDING)
-                            .bookingReference(generateBookingReference())
-                            .build();
+        if(!roomAvailable) {
+            log.warn("Room {} is not available", booking.getRoomId());
+            throw new IllegalStateException("Selected room not available");
+        }
 
-                    return Mono.deferContextual(ctx ->
-                            Mono.fromCallable(() -> repository.save(bookingToSave))
-                                    .subscribeOn(Schedulers.boundedElastic())
-                                    .contextWrite(ctx)
-                    );
-                })
-                .doOnError(error -> log.error("Booking failed: {}", error.getMessage()));
+        Booking bookingToSave = buildBooking(booking);
+
+        return repository.save(bookingToSave);
     }
-
 
     @CacheEvict(value = "bookings", key = "#id")
     @Transactional
@@ -113,5 +89,25 @@ public class BookingServiceImpl implements BookingService {
     private String generateBookingReference() {
         String raw = UUID.randomUUID().toString().replace("-", "");
         return "BOOK-" + raw.substring(0, 12);
+    }
+
+    private Booking buildBooking(Booking booking) {
+        return Booking.builder()
+                .guestId(booking.getGuestId())
+                .guestName(booking.getGuestName())
+                .guestEmail(booking.getGuestEmail())
+                .roomId(booking.getRoomId())
+                .roomNumber(booking.getRoomNumber())
+                .roomType(booking.getRoomType())
+                .checkInDate(booking.getCheckInDate())
+                .checkOutDate(booking.getCheckOutDate())
+                .numberOfGuests(booking.getNumberOfGuests())
+                .specialRequests(booking.getSpecialRequests())
+                .totalAmount(booking.getTotalAmount())
+                .discountAmount(booking.getDiscountAmount())
+                .taxAmount(booking.getTaxAmount())
+                .status(BookingStatus.PENDING)
+                .bookingReference(generateBookingReference())
+                .build();
     }
 }

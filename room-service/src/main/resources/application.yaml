@@ -7,8 +7,8 @@ spring:
 
   datasource:
     url: jdbc:postgresql://localhost:5432/RoomService
-    username: phoneshop_night
-    password: "vichea123"
+    username: postgres
+    password: "newpassword"
     driver-class-name: org.postgresql.Driver
 
   jpa:
