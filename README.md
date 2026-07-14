@@ -1,19 +1,16 @@
 # Agoda Microservices
 
-**A modern reactive hotel management microservices platform** inspired by Agoda’s booking system.
+**A Spring Boot microservices-based Hotel Management System** inspired by Agoda’s booking platform.
 
-Built with **Spring Boot 3**, **Java 21**, **WebFlux**, and **Project Reactor** for fully non-blocking, high-performance operations.
+This project has been migrated from a reactive stack (WebFlux + R2DBC) to **standard Spring Boot with Spring Data JPA + PostgreSQL** for improved simplicity, maintainability, and development experience.
 
 ---
 
-## Recent Update
-- **OpenFeign Migration** (July 2026): Replaced reactive `WebClient` with **Spring Cloud OpenFeign** + Resilience4j for improved maintainability, retries, and circuit breaking.
-
-## 🏗️ Architecture
+## Architecture
 
 ```mermaid
 flowchart TD
-    Client[Client / Frontend] --> Gateway[API Gateway<br/>Spring Cloud Gateway + WebFlux]
+    Client[Client / Frontend] --> Gateway[API Gateway<br/>Spring Cloud Gateway]
     Gateway --> Discovery[Eureka Discovery Server]
     
     subgraph Microservices
@@ -28,42 +25,45 @@ flowchart TD
     end
     
     Gateway --> Microservices
-    Microservices --> Databases[(R2DBC / Redis / MongoDB)]
+    Microservices --> PostgreSQL[(PostgreSQL)]
+    Microservices --> Redis[Redis Cache]
     Microservices --> Kafka[Kafka Events]
 ```
 
 ## 🚀 Tech Stack
 
-- **Java 21** (Virtual Threads, Records, Pattern Matching)
-- **Spring Boot 3.2+** + **Spring WebFlux**
-- **Project Reactor** (`Mono` / `Flux`)
+- **Java 21**
+- **Spring Boot 3.2+**
+- **Spring Data JPA** + **Hibernate**
+- **Spring Web MVC**
 - **Spring Cloud** (Eureka, Gateway, OpenFeign, Resilience4j)
-- **R2DBC** (MySQL / PostgreSQL)
-- **Reactive Redis** & **Reactive MongoDB**
-- **Kafka** (Reactive Streams)
-- **Docker** + **Docker Compose**
+- **PostgreSQL** (All services)
+- **Redis** (Caching)
+- **Kafka** (Event-Driven Architecture)
+- **Maven** + **Docker**
 
 ## 📦 Services
 
-| Service                | Port  | Key Technologies                     | Database          |
-|------------------------|-------|--------------------------------------|-------------------|
-| `discovery-server`     | 8761  | Eureka Server                        | -                 |
-| `api-gateway`          | 8080  | Spring Cloud Gateway, WebFlux        | -                 |
-| `Guest-Service`        | 8081  | WebFlux, OpenFeign, R2DBC            | MySQL             |
-| `booking-service`      | 8082  | Redis, Kafka                         | MySQL + Redis     |
-| `room-service`         | 8083  | R2DBC, Caching                       | PostgreSQL        |
-| `payment-service`      | 8084  | Reactive Transactions                | MySQL             |
-| `Loyalty-Service`      | 8085  | R2DBC                                | PostgreSQL        |
-| `inventory-management` | 8087  | R2DBC                                | MySQL             |
-| `staff-service`        | 8088  | R2DBC                                | PostgreSQL        |
-| `audit-monitoring`     | 8089  | Reactive Kafka                       | Elasticsearch     |
+| Service                | Port  | Key Technologies                     | Database      |
+|------------------------|-------|--------------------------------------|---------------|
+| `discovery-server`     | 8761  | Eureka Server                        | -             |
+| `api-gateway`          | 8080  | Spring Cloud Gateway                 | -             |
+| `Guest-Service`        | 8081  | Spring MVC, JPA, OpenFeign           | PostgreSQL    |
+| `booking-service`      | 8082  | JPA, Redis, Kafka                    | PostgreSQL    |
+| `room-service`         | 8083  | JPA, Caching                         | PostgreSQL    |
+| `payment-service`      | 8084  | JPA, Transactions                    | PostgreSQL    |
+| `Loyalty-Service`      | 8085  | JPA                                  | PostgreSQL    |
+| `inventory-management` | 8087  | JPA                                  | PostgreSQL    |
+| `staff-service`        | 8088  | JPA                                  | PostgreSQL    |
+| `audit-monitoring`     | 8089  | Kafka                                | PostgreSQL    |
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 - Java 21
 - Maven 3.9+
-- Docker & Docker Compose (recommended)
+- Docker & Docker Compose
+- PostgreSQL (via Docker recommended)
 
 ### Option 1: Docker Compose (Recommended)
 
@@ -73,18 +73,21 @@ cd Agoda-Microservice
 docker compose up -d --build
 ```
 
-### Option 2: Run Locally
+### Option 2: Local Development
 
 ```bash
-# Start databases first
-docker run -d -p 3306:3306 --name mysql -e MYSQL_ROOT_PASSWORD=reactivepass mysql:8.0
+# Start PostgreSQL and Redis
+docker run -d -p 5432:5432 --name postgres \
+  -e POSTGRES_PASSWORD=password \
+  -e POSTGRES_DB=hotel_db postgres:16
+
 docker run -d -p 6379:6379 redis:7-alpine
 
-# Run services (in separate terminals)
+# Run services (one by one)
 cd discovery-server && ./mvnw spring-boot:run
 cd ../api-gateway && ./mvnw spring-boot:run
 cd ../Guest-Service && ./mvnw spring-boot:run
-# ... repeat for other services
+# Repeat for other services
 ```
 
 ## 🔧 Configuration Example (`application.yml`)
@@ -96,24 +99,27 @@ server:
 spring:
   application:
     name: guest-service
-  r2dbc:
-    url: r2dbc:mysql://localhost:3306/hotel_db
-    username: root
-    password: reactivepass
-  threads:
-    virtual:
-      enabled: true
+  datasource:
+    url: jdbc:postgresql://localhost:5432/hotel_db
+    username: postgres
+    password: password
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  data:
+    redis:
+      host: localhost
+      port: 6379
 
 eureka:
   client:
     service-url:
       defaultZone: http://localhost:8761/eureka/
-
-spring:
-  cloud:
-    openfeign:
-      circuitbreaker:
-        enabled: true
 ```
 
 ## 📁 Project Structure (Example - Guest-Service)
@@ -121,12 +127,13 @@ spring:
 ```
 Guest-Service/
 ├── src/main/java/com/group/learn/guest/
-│   ├── controller/
-│   ├── service/
-│   ├── repository/      # Reactive repositories
-│   ├── client/          # OpenFeign clients
-│   ├── dto/
-│   ├── entity/
+│   ├── controller/          # @RestController
+│   ├── service/             # Business logic
+│   ├── repository/          # JpaRepository interfaces
+│   ├── client/              # OpenFeign clients
+│   ├── dto/                 # Data Transfer Objects
+│   ├── entity/              # @Entity classes
+│   ├── exception/
 │   └── config/
 ├── src/main/resources/application.yml
 ├── Dockerfile
@@ -144,9 +151,19 @@ public class GuestController {
     private final GuestService guestService;
     private final BookingClient bookingClient; // OpenFeign
 
-    @GetMapping(produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<GuestDTO> getAll() {
+    @GetMapping
+    public List<GuestDTO> getAllGuests() {
         return guestService.findAll();
+    }
+
+    @GetMapping("/{id}")
+    public GuestDTO getGuestById(@PathVariable Long id) {
+        return guestService.findById(id);
+    }
+
+    @PostMapping
+    public GuestDTO createGuest(@Valid @RequestBody GuestDTO guestDTO) {
+        return guestService.create(guestDTO);
     }
 }
 ```
@@ -155,51 +172,55 @@ public class GuestController {
 
 ```java
 @SpringBootTest
-@AutoConfigureWebTestClient
+@AutoConfigureMockMvc
 class GuestControllerTest {
 
     @Autowired
-    private WebTestClient webTestClient;
+    private MockMvc mockMvc;
 
     @Test
-    void getAllGuests_ShouldReturnFlux() {
-        webTestClient.get().uri("/api/guests")
-            .accept(MediaType.TEXT_EVENT_STREAM)
-            .exchange()
-            .expectStatus().isOk();
+    void getAllGuests_ShouldReturnOk() throws Exception {
+        mockMvc.perform(get("/api/guests"))
+               .andExpect(status().isOk());
     }
 }
 ```
 
 ## 📊 Monitoring
 
-- Health: `http://localhost:8081/actuator/health`
-- Metrics: `http://localhost:8081/actuator/metrics`
-- Circuit Breakers & Virtual Threads metrics available
+- Health: `/actuator/health`
+- Metrics: `/actuator/metrics`
+- OpenFeign + Resilience4j dashboards
 
 ## 🚢 Deployment
 
-Each service includes a ready-to-use `Dockerfile` optimized for Java 21.
+Each service includes a production-ready `Dockerfile`:
+
+```dockerfile
+FROM openjdk:21-jdk-slim
+WORKDIR /app
+COPY target/*.jar app.jar
+EXPOSE 8081
+ENTRYPOINT ["java", "-jar", "app.jar"]
+```
 
 ## 🤝 Contributing
 
-1. Follow `com.group.learn.*` package structure
-2. Prefer reactive patterns (`Mono`/`Flux`)
-3. Use OpenFeign for inter-service communication
-4. Add tests with `WebTestClient`
-5. Update this README when adding new features
+- Use **Spring Data JPA** with PostgreSQL
+- Follow `com.group.learn.*` package naming
+- Prefer OpenFeign for inter-service communication
+- Write clear tests with `MockMvc`
 
 ## 📄 License
 
-Apache License 2.0 — see [LICENSE](LICENSE) file.
+Apache License 2.0
 
 ---
 
-**Made by [VicheaStack](https://github.com/VicheaStack)** — Modern Java & Reactive Systems.
+**Made by [VicheaStack](https://github.com/VicheaStack)**
 
 ```
 
-Just copy everything above (including the first ```markdown:disable-run
+Copy and paste everything above into your `README.md` file.
 
-Would you like any last tweaks before you use it?
-```
+Let me know if you want any final adjustments!
